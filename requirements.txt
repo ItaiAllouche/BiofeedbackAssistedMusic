@@ -2,4 +2,3 @@ ssqueezepy==0.6.3
 scipy==1.11.1
 matplotlib
 pandas
-import-ipynb
