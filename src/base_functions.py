@@ -1,14 +1,14 @@
 # %%
 from scipy.signal import find_peaks
+from scipy import interpolate
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 from ssqueezepy import ssq_cwt
 import matplotlib.pyplot as plt
 # Frequency sampling
 FS = 32
 # Valid duration
-T = 10
+T = 6
 # Segment threshold
 A = 0.3
 # Max and Min frequency (in Hz)
@@ -19,10 +19,26 @@ alpha = 31.7
 beta = 1.4
 
 # %%
-from scipy import interpolate
-
-#TODO: add winodw to smooth the signal on the edges
-def compute_cwt(acc_sginal: np.ndarray, wavelet: tuple, fs: int) -> tuple:
+def viz(Tx, Wx):
+    plt.imshow(np.abs(Wx), aspect='auto', cmap='turbo')
+    plt.colorbar()
+    plt.title('Wx')
+    plt.show()
+    plt.imshow(np.abs(Tx), aspect='auto', vmin=0, vmax=.2, cmap='turbo')
+    plt.colorbar()
+    plt.title('Tx')
+    plt.show()
+# %%
+def peak2peak(magnitude_vec: np.ndarray) -> float:
+    peaks_idx, _ = find_peaks(magnitude_vec)
+    if(peaks_idx.size > 1):
+        peaks_value = magnitude_vec[peaks_idx]
+        sorted_idx = np.argsort(peaks_value)
+        return peaks_value[sorted_idx[-1]] - peaks_value[sorted_idx[-2]]
+    return 0
+# %%
+#TODO: add window to smooth the signal on the edges
+def compute_cwt(signal: np.ndarray, wavelet: tuple, fs: int) -> tuple:
 
     """Compute CWT over acceleration data.
 
@@ -37,8 +53,10 @@ def compute_cwt(acc_sginal: np.ndarray, wavelet: tuple, fs: int) -> tuple:
     Returns:
         Tuple of ndarrays with interpolated frequency and wavelet coefficients
     """
-
-    magnitude_cwt = ssq_cwt(acc_sginal[:-1], wavelet=wavelet, fs=fs)
+    signal = np.concatenate((np.zeros(5*fs),
+                             signal,
+                             np.zeros(5*fs)))
+    magnitude_cwt = ssq_cwt(signal[:-1], wavelet=wavelet, fs=fs)
     coefs = magnitude_cwt[0]
     coefs = np.append(coefs, coefs[:, -1:], 1)
 
@@ -212,10 +230,11 @@ def find_continuous_dominant_peaks(valid_peaks: np.ndarray, min_t: int,
 
     return cont_peaks[:, :-1]
 
+#TODO: copmute CWT toat least min_T concecutive valid windows 
 # %%
-def find_walking(magnitude: np.ndarray, magnitude_segments: np.ndarray, fs: int, 
+def find_walking(magnitude: np.ndarray, valid: np.ndarray, fs: int, 
                  step_freq: tuple, alpha: float,beta: float,
-                 min_t: int, delta: int) -> npt.NDArray[np.float64]:
+                 min_t: int, delta: int, plot_CWT: bool) -> npt.NDArray[np.float64]:
     """Finds walking and calculate steps from raw acceleration data.
 
     Method finds periods of repetitive and continuous oscillations with
@@ -223,8 +242,10 @@ def find_walking(magnitude: np.ndarray, magnitude_segments: np.ndarray, fs: int,
     Frequency components are extracted with Continuous Wavelet Transform.
 
     Args:
-        vm_bout: array of floats
+        magnitude: array of floats
             vector magnitude with one bout of activity (in g)
+        valid: array of booleans
+            true elements stands for segment amplitude above treshold             
         fs: integer
             sampling frequency (in Hz)
         step_freq: tuple
@@ -240,6 +261,8 @@ def find_walking(magnitude: np.ndarray, magnitude_segments: np.ndarray, fs: int,
         delta: integer
             maximum difference between consecutive peaks (in multiplication of
                                                           0.05Hz)
+        plot_CWT: bool
+            plot cwt magnitude, coefs_interp and freqs_interp                                                  
 
     Returns:
         Ndarray with identified number of steps per second
@@ -249,16 +272,29 @@ def find_walking(magnitude: np.ndarray, magnitude_segments: np.ndarray, fs: int,
     wavelet = ('gmw', {'beta': 90, 'gamma': 3})
 
     # compute and interpolate CWT
-    freqs_interp, coefs_interp = compute_cwt(acc_sginal=magnitude, fs=fs,
+    magnitude_cwt, freqs_interp, coefs_interp = compute_cwt(signal=magnitude, fs=fs,
                                                             wavelet=wavelet)
+     # plot CWT 
+    if(plot_CWT):
+        plt.title('magnitude original signal')
+        plt.plot(magnitude[:-1]); plt.show()
+
+        Twxo, Wxo, *_ = magnitude_cwt
+        viz(Twxo, Wxo)
+
+        plt.imshow(np.abs(coefs_interp), aspect='auto', vmin=0, vmax=.2, cmap='turbo')
+        plt.colorbar()
+        plt.title('coefs_interp')
+        plt.show()
+    
 
     # get map of dominant peaks
     dp = identify_peaks_in_cwt(freqs_interp, coefs_interp, fs, step_freq,
                                 alpha, beta)
 
     # distribute local maxima across valid periods
-    valid_peaks = np.zeros((dp.shape[0], len(magnitude_segments)))
-    valid_peaks[:, magnitude_segments] = dp
+    valid_peaks = np.zeros((dp.shape[0], len(valid)))
+    valid_peaks[:, valid] = dp
 
     # find peaks that are continuous in time (min_t) and frequency (delta)
     cont_peaks = find_continuous_dominant_peaks(valid_peaks, min_t, delta)
@@ -271,3 +307,4 @@ def find_walking(magnitude: np.ndarray, magnitude_segments: np.ndarray, fs: int,
             cadence[i] = freqs_interp[ind_freqs[0]]
 
     return cadence
+# %%
