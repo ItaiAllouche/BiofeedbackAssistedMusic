@@ -13,9 +13,9 @@ from base_functions import find_walking, peak2peak
 # Frequency sampling
 FS = 32
 # Max and Min frequency (for running)
-Fw_max = 6
-Fw_min = 0.5
-# Mininum consecutive windows to identify running (in sec)
+Fw_max = 2.3
+Fw_min = 1.4
+# Mininum consecutive windows to identify running (in sec). 3 or 4 in running
 min_T = 6
 # Segment threshold
 A = 0.3
@@ -49,5 +49,5 @@ def get_cadence (file_path: str) -> np.array:
     # Number of identified steps per second
     cadence = find_walking(magnitude=tapered_magnitude, valid=valid, fs=FS, 
                         step_freq=(Fw_min, Fw_max), alpha=alpha, beta=beta,
-                        min_t=min_T, delta=220, plot_CWT=False)
+                        min_t=min_T, delta=20, plot_CWT=False)
     return cadence
