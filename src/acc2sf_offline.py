@@ -24,7 +24,7 @@ alpha = 31.7
 beta = 1.4
 
 # %%
-def cadence_estimator (file_path: str) -> np.array:
+def get_cadence (file_path: str) -> np.array:
     # Read data
     df = pd.read_csv(file_path, skiprows=2, header=None)
     df.columns = ['x', 'y', 'z']
