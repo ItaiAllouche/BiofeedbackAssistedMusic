@@ -7,16 +7,10 @@
 from scipy.signal import find_peaks
 import numpy as np
 import pandas as pd
-#import import_ipynb
 from base_functions import find_walking, peak2peak
 
 # Frequency sampling
 FS = 32
-# Max and Min frequency (for running)
-Fw_max = 2.3
-Fw_min = 1.4
-# Mininum consecutive windows to identify running (in sec). 3 or 4 in running
-min_T = 6
 # Segment threshold
 A = 0.3
 # Parameters for equation from algorithm flow
@@ -24,7 +18,7 @@ alpha = 31.7
 beta = 1.4
 
 # %%
-def get_cadence (file_path: str) -> np.array:
+def get_cadence(file_path: str, running: bool) -> np.array:
     # Read data
     df = pd.read_csv(file_path, skiprows=2, header=None)
     df.columns = ['x', 'y', 'z']
@@ -34,6 +28,17 @@ def get_cadence (file_path: str) -> np.array:
     # Only segments with length 32 are valid
     magnitude = magnitude[:len(magnitude)-len(magnitude)%32]
     magnitude_segments = magnitude.reshape(-1,FS)
+
+    if(running):
+        Fw_max = 3.2
+        Fw_min = 1.7
+        min_T = 2
+
+    # walking
+    else:
+        Fw_max = 2.3
+        Fw_min = 1.4
+        min_T = 6
 
     # Calculate peak-to-peak amp in each segment
     ptp_amp = np.apply_along_axis(peak2peak,axis=1,arr=magnitude_segments)
