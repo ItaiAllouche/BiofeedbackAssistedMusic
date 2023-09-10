@@ -3,3 +3,4 @@ scipy==1.11.1
 matplotlib
 pandas
 python-vlc
+librosa
