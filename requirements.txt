@@ -4,3 +4,5 @@ matplotlib
 pandas
 python-vlc
 librosa
+setuptools
+python-dotenv
