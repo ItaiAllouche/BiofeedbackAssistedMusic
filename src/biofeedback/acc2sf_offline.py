@@ -7,7 +7,7 @@
 from scipy.signal import find_peaks
 import numpy as np
 import pandas as pd
-from base_functions import find_walking, peak2peak
+from biofeedback.base_functions import find_walking, peak2peak
 
 # Frequency sampling
 FS = 32
