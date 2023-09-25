@@ -7,6 +7,7 @@ handle_env() {
         python -m venv env
     fi
     source ./env/bin/activate
+    pip install -r requirements.txt
 }
 
 run_editable_install() {
@@ -18,4 +19,4 @@ handle_env
 run_editable_install
 
 echo "Activate environment:"
-echo "\t '\source ./env/bin/activate\'"
+echo "  'source ./env/bin/activate'"
