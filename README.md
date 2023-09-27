@@ -18,3 +18,5 @@ source env/bin/activate
 ```bash
 pip install git+ssh://git@github.com/ItaiAllouche/BiofeedbackAssistedMusic.git
 ```
+## IMPORTANT!!!
+Dont forget env variables!! 
