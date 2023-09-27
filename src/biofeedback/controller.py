@@ -1,5 +1,5 @@
 from biofeedback.acc2sf_offline import get_cadence
-from biofeedback.media_player import Player
+from biofeedback.media_player import Player 
 import numpy as np
 # import time
 import pandas as pd
@@ -8,6 +8,7 @@ from os.path import join
 from typing import List, NamedTuple
 import logging
 import logging.config
+from importlib.resources import files
 import sys
 # from dotenv import load_dotenv
 # load_dotenv(dotenv_path='../.env')
@@ -51,7 +52,14 @@ class Sample(NamedTuple):
     hr: float
     cadence: float
 
-logging.config.fileConfig('logging.conf')
+def get_logging_conf_path() -> str:
+    """
+    get logging.conf from package config directory
+    https://setuptools.pypa.io/en/stable/userguide/datafiles.html#accessing-data-files-at-runtime
+    """
+    return str(files('biofeedback.config').joinpath('logging.conf'))
+
+logging.config.fileConfig(get_logging_conf_path())
 logger = logging.getLogger('ctrl')
 
 # fhandler = logging.StreamHandler(sys.stdout)

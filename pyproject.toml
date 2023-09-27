@@ -5,9 +5,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "biofeedback"
 version = "0.1"
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+dependencies = [
+    "ssqueezepy==0.6.3",
+    "scipy==1.11.1",
+    "matplotlib",
+    "pandas",
+    "python-vlc",
+    "librosa",
+    "setuptools",
+    "python-dotenv",
+]
 
 [project.scripts]
 cli-name = "biofeedback.controller:run"
+
+# [tool.setuptools.dynamic]
+# dependencies = {file = ["requirements.txt"]}
