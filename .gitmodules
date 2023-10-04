@@ -1,0 +1,3 @@
+[submodule "flutter_empatica_e4_server"]
+	path = flutter_empatica_e4_server
+	url = https://github.com/adamkatav/flutter_empatica_e4_server.git
