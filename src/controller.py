@@ -78,9 +78,11 @@ class Runner:
         self.optimal_hr = 0
 
 
-def get_optimal_heart_rate(runner: Runner):
-    
-    return np.mean([low_HR, high_HR]).round(decimals=2)
+def get_optimal_heart_rate(runner: Runner, current_hr: float):  # TODO- allign between int and float
+    range = (runner.high_hr - runner.low_hr)
+    coefficient = (0.75 * range) # TODO- make sense and calculate with max and stuff.....
+    warm_up_result = (runner.low_hr - current_hr)
+    return runner.high_hr + coefficient*(warm_up_result/range)
 
 
 def calc_Next_tempo(runner: Runner, current_hr: float, current_cadence: float):
@@ -126,13 +128,14 @@ class Controller:
 
 
     def warm_up(self):
-        time.sleep(WARM_UP_TIME)
+        time.sleep(WARM_UP_TIME) # or after counting 120 HR recieved
         while True:
             topic, message = self.sub_socket.recv_multipart()
             data = json.loads(message)
             if topic == b'hr':
                 self.current_hr = data['hr']
-                self.runner.optimal_hr = get_optimal_heart_rate(self.runner)
+                self.runner.optimal_hr = get_optimal_heart_rate(self.runner, self.current_hr)
+                return
             
     def run(self):
         while True:
