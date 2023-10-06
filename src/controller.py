@@ -57,14 +57,9 @@ STABLE_COUNTDOWN = int(getenv('STABLE_COUNTDOWN', 3))
 Number of interval with time `INTERVAL` to allow for HR stabilization
 """
 
-PLAYLIST = getenv('PLAYLIST', 'recordings/playlists/playlist.txt')
+PLAYLIST = getenv('PLAYLIST', './playlist/playlist.txt')
 """
 Path to playlist.txt file
-"""
-
-EMPATICA_RECORD = getenv('EMPATICA_RECORD', 'recordings/empatica/gym_12kmh/')
-"""
-Path to empatica csv recording directory
 """
 
 # endregion
@@ -84,14 +79,13 @@ def get_optimal_heart_rate(runner: Runner, current_hr: float):  # TODO- allign b
     warm_up_result = (runner.low_hr - current_hr)
     return runner.high_hr + coefficient*(warm_up_result/range)
 
-
-def calc_Next_tempo(runner: Runner, current_hr: float, current_cadence: float):
+def calc_tempo_change(runner: Runner, current_hr: float, current_cadence: float):
     '''
     calculate the change in bpm in percentage  TODO- make sense
     '''
     if runner.optimal_hr == current_hr:
         if current_cadence == runner.current_song_tempo:
-            return  0
+            return 0
         elif current_cadence > runner.current_song_tempo:
             return 5
         else:
@@ -105,7 +99,7 @@ class Sample(NamedTuple):
 
 
 class Controller:
-    def __init__(self, server_ip: str, sub_port: str, runner: Runner, playback_speed_change_interval: int = 30):
+    def __init__(self, server_ip: str, sub_port: str, runner: Runner, stable_countdown: int = 30):
         # Subscriber socket setup
         self.SERVER_IP = server_ip
         self.SUB_PORT = sub_port
@@ -118,7 +112,7 @@ class Controller:
         # player setup
         self.music_player = Player.from_file(path=PLAYLIST)
         self.current_song_idx = 0
-        self.playback_speed_change_interval = playback_speed_change_interval
+        self.playback_speed_change_interval = stable_countdown
         
         # calculator setup
         self.runner = runner
@@ -128,7 +122,7 @@ class Controller:
 
 
     def warm_up(self):
-        time.sleep(WARM_UP_TIME) # or after counting 120 HR recieved
+        time.sleep(WARM_UP_TIME) # or after counting WARM_UP_TIME HR recieved
         while True:
             topic, message = self.sub_socket.recv_multipart()
             data = json.loads(message)
@@ -151,9 +145,8 @@ class Controller:
             
             if self.num_of_cadece_readings == self.playback_speed_change_interval:
                 self.num_of_cadece_readings = 0
-                calc_Next_tempo(runner, self.hr, self.cadence)
-
-
+                playback_change = calc_tempo_change(runner, self.hr, self.cadence)
+                self.music_player.change_tempo(playback_change)
 
 
 
@@ -161,6 +154,7 @@ if __name__ == "__main__":
     SERVER_IP = '....'  # Replace with your server IP
     SUB_PORT = '...'    # Replace with your subscriber port
     runner = Runner(low_hr=95.95, high_hr=134.33, age=26)
-    controller = Controller(SERVER_IP, SUB_PORT, runner, INTERVAL)
+    controller = Controller(SERVER_IP, SUB_PORT, runner, STABLE_COUNTDOWN)
     controller.warm_up()
+    controller.music_player.play()
     controller.run()

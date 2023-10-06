@@ -1,0 +1,4 @@
+/home/dogomen11/BiofeedbackAssistedMusic/src/playlist/DaftPunk_Voyager_120.mp3
+/home/dogomen11/BiofeedbackAssistedMusic/src/playlist/Eiffel65_Blue_128.mp3
+/home/dogomen11/BiofeedbackAssistedMusic/src/playlist/AndrewRayel_Musa_134.mp3
+/home/dogomen11/BiofeedbackAssistedMusic/src/playlist/InfectedMushroom_saeed_145.mp3

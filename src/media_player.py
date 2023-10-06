@@ -83,6 +83,14 @@ class Player:
         logger.debug('stop')
         self._list_player.stop()
 
+    def change_tempo(self, speed_change: float = None):
+        if (speed_change is None) or (speed_change == 0):
+            return
+        elif speed_change > 0:
+            self.up(speed_change)
+        else:
+            self.down(speed_change)
+    
     def up(self, speed_change: float = None):
         logger.debug('up')
         self._media_player.set_rate(
