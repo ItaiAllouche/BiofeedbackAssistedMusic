@@ -1,26 +1,23 @@
 import zmq #pip install pyzmq
 import json
 from typing import NamedTuple
-
-SERVER_IP = '....'
-SUB_PORT = '...'
-PUB_PORT = '...'
-
+from biofeedback.settings import WATCH_SERVER_IP, WATCH_SERVER_PORT, SF_PROC_PORT
 context = zmq.Context()
 
 # Subscriber socket setup
 sub_socket = context.socket(zmq.SUB)
 sub_socket.setsockopt(zmq.SUBSCRIBE, b'acc')
-sub_socket.connect(f"tcp://{SERVER_IP}:{SUB_PORT}")
+sub_socket.connect(f"tcp://{WATCH_SERVER_IP}:{WATCH_SERVER_PORT}")
 
-# Publisher socket setup
-pub_socket = context.socket(zmq.PUB)
-pub_socket.bind(f"tcp://*:{PUB_PORT}")  # Binding to all available interfaces
+# Response socket setup
+rep_socket = context.socket(zmq.REP)
+rep_socket.bind(f"tcp://*:{SF_PROC_PORT}")  # Binding to all available interfaces
 
 class ACC(NamedTuple):
-    x: float
-    y: float
-    z: float
+    x: int
+    y: int
+    z: int
+
 
 acc_window = []
 num_of_acc_readings = 0
@@ -30,14 +27,14 @@ def get_cadence(acc_window):
 
 
 while True:
-    topic, message = sub_socket.recv_multipart()
-    data = json.loads(message)
-    acc_data = ACC(acc=data['acc'])
+    data: dict = json.loads(sub_socket.recv().decode().split(' ')[1])
+    data = {k:int(v) for k,v in data.items()}
+    acc_data = ACC(**data)
     acc_window.append(acc_data)
     num_of_acc_readings += 1
     if num_of_acc_readings == 2:
         result = get_cadence(acc_window)
         acc_window = []
         num_of_acc_readings = 0
-        pub_socket.send_string(json.dumps(result))
+        rep_socket.send_string(json.dumps(result))
 

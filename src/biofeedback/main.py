@@ -1,5 +1,5 @@
-
-
+from biofeedback.controller import Controller
+from biofeedback.settings import SERVER_IP
 
 if __name__ == "__main__":
     controller = Controller(SERVER_IP)
