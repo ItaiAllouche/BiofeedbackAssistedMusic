@@ -15,7 +15,10 @@ import logging
 import logging.config
 from importlib.resources import files
 import sys
-from media_player import Player 
+from media_player import Player
+from playsound import playsound 
+import random
+import copy
 # from dotenv import load_dotenv
 # load_dotenv(dotenv_path='../.env')
 
@@ -57,10 +60,31 @@ STABLE_COUNTDOWN = int(getenv('STABLE_COUNTDOWN', 3))
 Number of interval with time `INTERVAL` to allow for HR stabilization
 """
 
+HR_PROC_PORT = int(getenv('HR_PROC_PORT', 1111))
+"""
+Port num of HR process
+"""
+
+SF_PROC_PORT = int(getenv('SF_PROC_PORT', 2222))
+"""
+Port num of SF process
+"""
+
+SERVER_IP = getenv('SERVER_IP', '127.0.0.1')
+"""
+Running server ip
+"""
+
 PLAYLIST = getenv('PLAYLIST', './playlist/playlist.txt')
 """
 Path to playlist.txt file
 """
+
+SF_TEST_INTERVAL = float(getenv('RUNNING_DURATION', './playlist/playlist.txt'))
+"""
+Time in minutes per step freq test
+"""
+
 
 # endregion
 
@@ -97,56 +121,89 @@ class Sample(NamedTuple):
     hr: float
     cadence: float
 
+class TestPoint(NamedTuple):
+    avg_hr: float
+    avg_sf: float
+    
+class Parabola(NamedTuple):
+    a: float
+    b: float
+    c: float
+
+class OptHrPoint(NamedTuple):
+    x: float
+    y: float
+
 
 class Controller:
     def __init__(self, server_ip: str, sub_port: str, runner: Runner, stable_countdown: int = 30):
         # Subscriber socket setup
         self.SERVER_IP = server_ip
-        self.SUB_PORT = sub_port
         self.context = zmq.Context()
-        self.sub_socket = self.context.socket(zmq.SUB)
-        self.sub_socket.setsockopt(zmq.SUBSCRIBE, b'hr')
-        self.sub_socket.setsockopt(zmq.SUBSCRIBE, b'cadence')
-        self.sub_socket.connect(f"tcp://{self.SERVER_IP}:{self.SUB_PORT}")
-        
-        # player setup
-        self.music_player = Player.from_file(path=PLAYLIST)
-        self.current_song_idx = 0
-        self.playback_speed_change_interval = stable_countdown
-        
-        # calculator setup
-        self.runner = runner
-        self.current_hr = 0
-        self.current_cadence = 0
-        self.num_of_cadece_readings = 0
-
-
-    def warm_up(self):
-        time.sleep(WARM_UP_TIME) # or after counting WARM_UP_TIME HR recieved
-        while True:
-            topic, message = self.sub_socket.recv_multipart()
-            data = json.loads(message)
-            if topic == b'hr':
-                self.current_hr = data['hr']
-                self.runner.optimal_hr = get_optimal_heart_rate(self.runner, self.current_hr)
-                return
+        self.hr_socket = self.context.socket(zmq.REQ)
+        self.hr_socket.connect(f"tcp://{self.SERVER_IP}:{HR_PROC_PORT}")
+        self.sf_socket = self.context.socket(zmq.REQ)
+        self.sf_socket.connect(f"tcp://{self.SERVER_IP}:{SF_PROC_PORT}")
+        self.sf_to_song_path: dict[int, str]
+                
+    def avg_hr_sf_over_interval(self, time_interval=SF_TEST_INTERVAL) -> TestPoint:
+        hr_sum:float = 0
+        hr_count:int = 0
+        sf_sum:float = 0
+        sf_count:int = 0
+        finished_time = time.time() + SF_TEST_INTERVAL * 60
+        while(time.time() < finished_time):
+            hr_msg = self.hr_socket.recv_pyobj()
+            hr_sum += hr_msg
+            hr_count += 1
+            sf_msg = self.sf_socket.recv_pyobj()
+            sf_sum += sf_msg
+            sf_count += 1
             
-    def run(self):
-        while True:
-            topic, message = self.sub_socket.recv_multipart()
-            data = json.loads(message)
-            if topic == b'hr':
-                self.hr = data['hr']
-            elif topic == b'cadence':
-                self.cadence = data['cadence']
-                self.num_of_cadece_readings += 1
-            else:
-                raise ValueError(f'Unknown topic {topic}') #TODO - handle this error or delete
-            
-            if self.num_of_cadece_readings == self.playback_speed_change_interval:
-                self.num_of_cadece_readings = 0
-                playback_change = calc_tempo_change(runner, self.hr, self.cadence)
-                self.music_player.change_tempo(playback_change)
+        return TestPoint(hr_sum/hr_count, sf_sum/sf_count)
+
+    def clc_hr_over_sf_interval(self, wanted_sf: int) -> TestPoint:
+        song_to_be_played_path = self.sf_to_song_path[wanted_sf]
+        playsound(song_to_be_played_path)
+        return self.avg_hr_sf_over_interval()
+    
+    def run_epoch(self, wanted_sf: list[int]) -> list[TestPoint]:
+        '''
+        calculate avg_hr and avg_sf from each sf in wanted_sf
+        '''
+        return [self.clc_hr_over_sf_interval(wanted_sf=sf) for sf in wanted_sf]
+        
+    def run(self, wanted_sf: list[int], n_epoch: int) -> dict[int, list[TestPoint]]:
+        test_points: dict[int, list[TestPoint]] = {k:[] for k in wanted_sf}
+        wanted_sf = copy.deepcopy(wanted_sf)
+        for _ in range(n_epoch):
+            pairs = zip(wanted_sf, self.run_epoch(wanted_sf))
+            for sf,tp in pairs:
+                test_points[sf].append(tp)
+            random.shuffle(wanted_sf) # change step frequencies order on each epoch
+        return test_points
+        
+    def est_polynom(self, wanted_sf: list[int], n_epoch: int) -> Parabola:
+        points_dict = self.run(wanted_sf, n_epoch)
+        pts = [tp for list_of_tp in points_dict.values() for tp in list_of_tp]
+        x_pts = [p.avg_sf for p in pts]
+        y_pts = [p.avg_hr for p in pts]
+        coeffs = np.polyfit(x=x_pts, y=y_pts, deg=2)
+        assert len(coeffs) == 3
+        return Parabola(*coeffs)
+                                        
+    def clc_min(self, wanted_sf: list[int], n_epoch: int) -> OptHrPoint:
+        parab = self.est_polynom(wanted_sf=wanted_sf, n_epoch=n_epoch)
+        min_x = parab.c-(parab.b**2)/(4*parab.a)
+        min_y = parab.a*min_x**2+parab.b*min_x+parab.c
+        min_pt = OptHrPoint(x=min_x, y=min_y)
+        return min_pt
+        
+        
+        
+        
+        
+        
 
 
 
