@@ -7,7 +7,6 @@ handle_env() {
         python -m venv env
     fi
     source ./env/bin/activate
-    pip install -r requirements.txt
 }
 
 run_editable_install() {
