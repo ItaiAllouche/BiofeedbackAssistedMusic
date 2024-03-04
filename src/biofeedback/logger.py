@@ -13,6 +13,7 @@ from media_player import Player
 # load_dotenv(dotenv_path='../.env')
 
 import zmq
+import pyzmq
 import json
 from typing import NamedTuple
 

@@ -80,7 +80,7 @@ PLAYLIST = getenv('PLAYLIST', './playlist/playlist.txt')
 Path to playlist.txt file
 """
 
-SF_TEST_INTERVAL = float(getenv('RUNNING_DURATION', './playlist/playlist.txt'))
+SF_TEST_INTERVAL = float(getenv('SF_TEST_INTERVAL', 1.5))
 """
 Time in minutes per step freq test
 """
@@ -136,15 +136,15 @@ class OptHrPoint(NamedTuple):
 
 
 class Controller:
-    def __init__(self, server_ip: str, sub_port: str, runner: Runner, stable_countdown: int = 30):
+    def __init__(self, server_ip: str, sf_to_song_path: dict[int, str]):
         # Subscriber socket setup
         self.SERVER_IP = server_ip
         self.context = zmq.Context()
+        self.sf_to_song_path = sf_to_song_path
         self.hr_socket = self.context.socket(zmq.REQ)
         self.hr_socket.connect(f"tcp://{self.SERVER_IP}:{HR_PROC_PORT}")
         self.sf_socket = self.context.socket(zmq.REQ)
         self.sf_socket.connect(f"tcp://{self.SERVER_IP}:{SF_PROC_PORT}")
-        self.sf_to_song_path: dict[int, str]
                 
     def avg_hr_sf_over_interval(self, time_interval=SF_TEST_INTERVAL) -> TestPoint:
         hr_sum:float = 0
@@ -192,7 +192,7 @@ class Controller:
         assert len(coeffs) == 3
         return Parabola(*coeffs)
                                         
-    def clc_min(self, wanted_sf: list[int], n_epoch: int) -> OptHrPoint:
+    def clc_min_hr_pt(self, wanted_sf: list[int], n_epoch: int) -> OptHrPoint:
         parab = self.est_polynom(wanted_sf=wanted_sf, n_epoch=n_epoch)
         min_x = parab.c-(parab.b**2)/(4*parab.a)
         min_y = parab.a*min_x**2+parab.b*min_x+parab.c
@@ -206,12 +206,3 @@ class Controller:
         
 
 
-
-if __name__ == "__main__":
-    SERVER_IP = '....'  # Replace with your server IP
-    SUB_PORT = '...'    # Replace with your subscriber port
-    runner = Runner(low_hr=95.95, high_hr=134.33, age=26)
-    controller = Controller(SERVER_IP, SUB_PORT, runner, STABLE_COUNTDOWN)
-    controller.warm_up()
-    controller.music_player.play()
-    controller.run()
