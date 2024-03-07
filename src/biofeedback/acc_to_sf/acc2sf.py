@@ -10,8 +10,8 @@ alpha = 31.7
 beta = 1.4
 
 # %%
-def get_cadence(acc_data: np.ndarray, running: bool) -> np.ndarray:
-    magnitude = np.linalg.norm(acc_data, axis=1)-1
+def get_cadence(acc_data: np.ndarray, running: bool=False) -> np.ndarray:
+    magnitude = np.linalg.norm(acc_data, axis=1) - 1
 
     # Split data into segments - 1 sec non-overlapping windows
     # Only segments with length 32 are valid

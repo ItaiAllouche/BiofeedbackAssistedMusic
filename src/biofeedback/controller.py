@@ -9,7 +9,7 @@ from biofeedback.structs import *
 import numpy as np
 import time
 from typing import List, NamedTuple
-from playsound import playsound 
+# from playsound import playsound 
 import random
 import copy
 import zmq
@@ -36,10 +36,13 @@ class Controller:
         end_time = start_time + interval_in_sec
         while(time.time() < end_time):
             if(time.time() > half_time): # Calculating over only after half of the interval has passed
-                hr_msg = self.hr_socket.recv_pyobj()
+                # hr_msg = self.hr_socket.recv_pyobj()
+                hr_msg = 120.0
                 hr_sum += hr_msg
                 hr_count += 1
+                self.sf_socket.send_pyobj(obj=['test'])
                 sf_msg = self.sf_socket.recv_pyobj()
+                print(f'{sf_msg=}')
                 sf_sum += sf_msg
                 sf_count += 1
             
@@ -47,7 +50,8 @@ class Controller:
 
     def clc_hr_over_sf_interval(self, wanted_sf: int) -> TestPoint:
         song_to_be_played_path = self.sf_to_song_path[wanted_sf]
-        playsound(song_to_be_played_path)
+        # playsound(song_to_be_played_path)
+        print('Pretend we played a song')
         return self.avg_hr_sf_over_interval()
     
     def run_epoch(self, wanted_sf: list[int]) -> list[TestPoint]:
@@ -56,7 +60,7 @@ class Controller:
         '''
         return [self.clc_hr_over_sf_interval(wanted_sf=sf) for sf in wanted_sf]
         
-    def run(self, wanted_sf: list[int], n_epoch: int) -> dict[int, list[TestPoint]]:
+    def run_all_epochs(self, wanted_sf: list[int], n_epoch: int) -> dict[int, list[TestPoint]]:
         '''Play list of epochs'''
         test_points: dict[int, list[TestPoint]] = {k:[] for k in wanted_sf}
         wanted_sf = copy.deepcopy(wanted_sf)
@@ -68,7 +72,7 @@ class Controller:
         return test_points
         
     def est_polynom(self, wanted_sf: list[int], n_epoch: int) -> Parabola:
-        points_dict = self.run(wanted_sf, n_epoch)
+        points_dict = self.run_all_epochs(wanted_sf, n_epoch)
         pts = [tp for list_of_tp in points_dict.values() for tp in list_of_tp]
         x_pts = [p.avg_sf for p in pts]
         y_pts = [p.avg_hr for p in pts]
@@ -82,3 +86,14 @@ class Controller:
         min_y = parab.a*min_x**2+parab.b*min_x+parab.c
         min_pt = OptHrPoint(x=min_x, y=min_y)
         return min_pt
+
+
+def run():
+    wanted_sf=[65,70,75,80,85]
+    controller = Controller(SERVER_IP, {w_sf:'/home/adam/shit/BiofeedbackAssistedMusic/src/playlist/AndrewRayel_Musa_134.mp3' for w_sf in wanted_sf})
+    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=3)
+    print(result)
+    
+
+if __name__ == "__main__":
+    run()

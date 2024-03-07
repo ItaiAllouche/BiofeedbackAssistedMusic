@@ -39,12 +39,12 @@ SF_PROC_PORT = int(getenv('SF_PROC_PORT', 2222))
 Port num of SF process
 """
 
-WATCH_SERVER_PORT = int(getenv('WATCH_SERVER_PORT', 5555))
+WATCH_SERVER_PORT = int(getenv('WATCH_SERVER_PORT', 5050))
 """
 Port num of watch server, i.e phone
 """
 
-WATCH_SERVER_IP = int(getenv('WATCH_SERVER_IP', '192.168.1.179'))
+WATCH_SERVER_IP = getenv('WATCH_SERVER_IP', '192.168.1.179')
 """
 IP of watch server, i.e phone
 """
