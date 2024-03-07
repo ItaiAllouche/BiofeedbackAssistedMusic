@@ -44,6 +44,11 @@ WATCH_SERVER_PORT = int(getenv('WATCH_SERVER_PORT', 5050))
 Port num of watch server, i.e phone
 """
 
+ACC_WINDOW_TIME = int(getenv('ACC_WINDOW_TIME', 10))
+"""
+Cadance measuring window time (must be greater than `min_t`)
+"""
+
 WATCH_SERVER_IP = getenv('WATCH_SERVER_IP', '192.168.1.179')
 """
 IP of watch server, i.e phone

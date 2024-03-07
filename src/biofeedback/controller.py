@@ -41,10 +41,10 @@ class Controller:
                 hr_sum += hr_msg
                 hr_count += 1
                 self.sf_socket.send_pyobj(obj=['test'])
-                sf_msg = self.sf_socket.recv_pyobj()
+                sf_msg: np.ndarray = self.sf_socket.recv_pyobj()
                 print(f'{sf_msg=}')
-                sf_sum += sf_msg
-                sf_count += 1
+                sf_sum += np.sum(sf_msg)
+                sf_count += ACC_WINDOW_TIME
             
         return TestPoint(hr_sum/hr_count, sf_sum/sf_count)
 
@@ -89,9 +89,11 @@ class Controller:
 
 
 def run():
-    wanted_sf=[65,70,75,80,85]
+    # wanted_sf=[65,70,75,80,85]
+    wanted_sf=[65,70]
     controller = Controller(SERVER_IP, {w_sf:'/home/adam/shit/BiofeedbackAssistedMusic/src/playlist/AndrewRayel_Musa_134.mp3' for w_sf in wanted_sf})
-    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=3)
+    # result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=3)
+    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=1)
     print(result)
     
 

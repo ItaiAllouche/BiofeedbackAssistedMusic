@@ -2,12 +2,11 @@ import zmq #pip install pyzmq
 import json
 from typing import NamedTuple
 import numpy as np
-from biofeedback.settings import WATCH_SERVER_IP, WATCH_SERVER_PORT, SF_PROC_PORT
+from biofeedback.settings import WATCH_SERVER_IP, WATCH_SERVER_PORT, SF_PROC_PORT, ACC_WINDOW_TIME
 from biofeedback.acc_to_sf.acc2sf import get_cadence
 
 
 ACC_SAMPLING_RATE = 32
-WINDOW_TIME = 10
 def run():
     context = zmq.Context()
 
@@ -32,7 +31,7 @@ def run():
     while True:
         _ = rep_socket.recv_pyobj()
         
-        for _ in range(ACC_SAMPLING_RATE*WINDOW_TIME):
+        for _ in range(ACC_SAMPLING_RATE*ACC_WINDOW_TIME):
             # !!!Remember the tcp buffer from the phone!!!
             data: dict = json.loads(sub_socket.recv().decode().split(' ')[1])
             data = {k:int(v) for k,v in data.items()}
@@ -40,14 +39,8 @@ def run():
             acc_window.append(acc_data)
         acc_matrix = np.array(acc_window)
         result: float = get_cadence(acc_matrix)
-        # result: float = 83
         rep_socket.send_pyobj(result)
         acc_window = []
-        # num_of_acc_readings += 1
-        # if num_of_acc_readings == 2:
-        #     acc_window = []
-        #     num_of_acc_readings = 0
-        #     rep_socket.send_string(json.dumps(result))
     
 
 if __name__ == '__main__':
