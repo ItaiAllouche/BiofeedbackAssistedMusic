@@ -1,5 +1,5 @@
 # %%
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, butter, filtfilt
 from scipy import interpolate
 import numpy as np
 import numpy.typing as npt
@@ -308,3 +308,24 @@ def find_walking(magnitude: np.ndarray, valid: np.ndarray, fs: int,
 
     return cadence
 # %%
+
+def bandpass_filter(signal_data: np.ndarray, low_freq: float, high_freq: float, sampling_rate:int) -> np.ndarray: 
+    """
+    Filter frequencies out of [low_freq, high_freq].
+        args:
+            signal_data: 
+                data in time domain
+            low_freq:
+                low frequency
+            high_freq:
+                high frequency
+            sampling_rate:
+                sampling rate
+    """
+    nyquist_freq = 0.5 * sampling_rate
+    low = low_freq / nyquist_freq
+    high = high_freq / nyquist_freq
+    order = 4  # Filter order
+    b, a = butter(order, [low, high], btype='band')
+    filtered_signal = filtfilt(b, a, signal_data)
+    return filtered_signal
