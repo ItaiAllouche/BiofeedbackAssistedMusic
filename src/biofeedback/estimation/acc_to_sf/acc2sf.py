@@ -1,5 +1,5 @@
 import numpy as np
-from biofeedback.acc_to_sf.base_functions import find_walking, peak2peak
+from biofeedback.estimation.base_functions import find_walking, peak2peak
 
 # Frequency sampling
 FS = 32
