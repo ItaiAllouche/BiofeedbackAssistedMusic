@@ -1,5 +1,6 @@
 import zmq #pip install pyzmq
 import json
+import sys
 from typing import NamedTuple
 import numpy as np
 from biofeedback.settings import WATCH_SERVER_IP, WATCH_SERVER_PORT, SF_PROC_PORT, ACC_WINDOW_TIME
@@ -38,10 +39,13 @@ def run():
             acc_data = ACC(**data)
             acc_window.append(acc_data)
         acc_matrix = np.array(acc_window)
-        result: float = get_cadence(acc_matrix)
+        result: float = get_cadence(acc_matrix, running=True)
         rep_socket.send_pyobj(result)
         acc_window = []
     
 
 if __name__ == '__main__':
-    run()
+    try:
+        run()
+    except KeyboardInterrupt:
+        sys.exit()

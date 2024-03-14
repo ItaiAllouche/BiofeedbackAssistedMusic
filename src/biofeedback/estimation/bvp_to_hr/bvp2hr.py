@@ -7,11 +7,23 @@ LOW_FREQ = 0.5 #Hz
 HIGH_FREQ = 5 #Hz
 
 def get_hr_from_bvp(bvp: np.ndarray) -> float:
+    import matplotlib.pyplot as plt
+    # plt.plot(bvp)
     filtered_bvp_signal = bandpass_filter(bvp, LOW_FREQ, HIGH_FREQ, sampling_rate=SAMPLING_RATE)
-    n = len(filtered_bvp_signal)
-    frequencies = fftfreq(n, 1/SAMPLING_RATE)
-    fft_values = fft(filtered_bvp_signal)
-    common_freq = frequencies[:n//2][np.abs(fft_values[:n//2]).argmax()]
-    ibi = 1 / common_freq
-    hr = 60 / ibi
-    return hr
+    # n = len(filtered_bvp_signal)
+    # frequencies = fftfreq(n, 1/SAMPLING_RATE)
+    # fft_values = abs(fft(filtered_bvp_signal))
+    # frequencies = frequencies[:len(frequencies)//2]
+    # fft_values = fft_values[:len(fft_values)//2]
+    # fft_values /= sum(fft_values)
+    # hr_in_hz = fft_values@frequencies
+    # hr_bpm = 60*hr_in_hz
+    # return hr_bpm
+    from scipy.signal import correlate, find_peaks
+    r = correlate(filtered_bvp_signal, filtered_bvp_signal)
+    r = r[len(r)//2:]
+    peaks,_ = find_peaks(r, prominence=r[0]/4)
+    plt.plot(r)
+    plt.scatter(peaks, r[peaks], color='r')
+    plt.show()
+    return 60/((peaks[1]-peaks[0])/64)

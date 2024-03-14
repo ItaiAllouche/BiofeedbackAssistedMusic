@@ -15,7 +15,8 @@ dependencies = [
     "setuptools",
     "python-dotenv",
     "pyzmq",
-    "playsound"
+    "playsound",
+    "csv_logger"
 ]
 
 [project.scripts]

@@ -7,12 +7,23 @@ this modules ignores warm up period
 from biofeedback.settings import *
 from biofeedback.structs import *
 import numpy as np
+import sys
 import time
-from typing import List, NamedTuple
 # from playsound import playsound 
 import random
 import copy
 import zmq
+from csv_logger import CsvLogger
+from typing import NamedTuple
+
+csvlogger = CsvLogger(filename=LOG_CSV,
+                      fmt=f'%(message)s',
+                      header=['sf', 'hr', 'tempo'])
+
+class LogRow(NamedTuple):
+    sf: float
+    hr: float
+    tempo: int
 
 
 class Controller:
@@ -25,34 +36,39 @@ class Controller:
         self.sf_socket = self.context.socket(zmq.REQ)
         self.sf_socket.connect(f"tcp://{self.SERVER_IP}:{SF_PROC_PORT}")
                 
-    def avg_hr_sf_over_interval(self, time_interval=SF_TEST_INTERVAL) -> TestPoint:
+    def avg_hr_sf_over_interval(self, current_tempo: float, time_interval=SF_TEST_INTERVAL) -> TestPoint:
         hr_sum:float = 0
         hr_count:int = 0
         sf_sum:float = 0
         sf_count:int = 0
         interval_in_sec = SF_TEST_INTERVAL * 60
         start_time = time.time()
-        half_time = start_time + interval_in_sec//2
+        warmup_time = start_time + interval_in_sec//3
         end_time = start_time + interval_in_sec
+        is_first = True
         while(time.time() < end_time):
-            if(time.time() > half_time): # Calculating over only after half of the interval has passed
-                # hr_msg = self.hr_socket.recv_pyobj()
-                hr_msg = 120.0
+            if(time.time() > warmup_time): # Calculating over only after half of the interval has passed
+                if(is_first):
+                    print(f'Finished warmup')
+                    is_first = False
+                self.hr_socket.send_pyobj(obj=['test'])
+                self.sf_socket.send_pyobj(obj=['test'])
+                hr_msg: float = self.hr_socket.recv_pyobj()
+                sf_msg: np.ndarray = self.sf_socket.recv_pyobj()
                 hr_sum += hr_msg
                 hr_count += 1
-                self.sf_socket.send_pyobj(obj=['test'])
-                sf_msg: np.ndarray = self.sf_socket.recv_pyobj()
-                print(f'{sf_msg=}')
                 sf_sum += np.sum(sf_msg)
-                sf_count += ACC_WINDOW_TIME
+                print(sf_msg)
+                sf_count += len(sf_msg)
+                csvlogger.info(list(LogRow(sf=sf_msg.mean(), hr=hr_msg, tempo=current_tempo)))
             
         return TestPoint(hr_sum/hr_count, sf_sum/sf_count)
 
     def clc_hr_over_sf_interval(self, wanted_sf: int) -> TestPoint:
         song_to_be_played_path = self.sf_to_song_path[wanted_sf]
         # playsound(song_to_be_played_path)
-        print('Pretend we played a song')
-        return self.avg_hr_sf_over_interval()
+        print(f'Playing {song_to_be_played_path}')
+        return self.avg_hr_sf_over_interval(current_tempo=wanted_sf*2)
     
     def run_epoch(self, wanted_sf: list[int]) -> list[TestPoint]:
         '''
@@ -89,13 +105,17 @@ class Controller:
 
 
 def run():
-    # wanted_sf=[65,70,75,80,85]
-    wanted_sf=[65,70]
-    controller = Controller(SERVER_IP, {w_sf:'/home/adam/shit/BiofeedbackAssistedMusic/src/playlist/AndrewRayel_Musa_134.mp3' for w_sf in wanted_sf})
-    # result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=3)
-    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=1)
+    wanted_sf=[65,75,85]
+    songs = ['ain\'t no sunshine', 'don\'t stop me now', 'axef F']
+    # wanted_sf=[65,70]
+    controller = Controller(SERVER_IP, {w_sf:song for w_sf, song in zip(wanted_sf, songs)})
+    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=3)
+    # result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=1)
     print(result)
     
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except KeyboardInterrupt:
+        sys.exit()
