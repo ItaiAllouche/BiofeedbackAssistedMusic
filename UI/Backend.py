@@ -5,24 +5,23 @@ import sys
 import os
 OUTPUT_PATH = Path(__file__).parent
 
-import main_menu 
-import settings 
-import run_menu 
-from run_menu.build.gui import *
-from settings.build.gui import *
-from main_menu.build.gui import *
 
 #############################################################################
     
 # Main menu
 
-def on_Start_run_button_click():
+def on_Start_run_button_click(window):
+    window.destroy()
     print("Start run")
-    start_run_menu()
+    import run_menu.build.gui
+    run_menu.build.gui.start_run_menu()
     
-def on_Settings_button_click():
+    
+def on_Settings_button_click(window):
+    window.destroy()
     print("Settings")
-    start_settings_menu()
+    import settings.build.gui 
+    settings.build.gui.start_settings_menu()
     
 def on_Exit_button_click():
     print("Exit")
@@ -55,13 +54,17 @@ def on_Set_button_click(warm_up_time, interval_time, threshold_hr):
     os.environ["INTERVAL_TIME"] = interval_time
     os.environ["THRESHOLD_HR"] = threshold_hr
     
-def on_Back_from_settings_button_click(): 
-    start_main_menu()
+def on_Back_from_settings_button_click(window):
+    window.destroy()
+    import main_menu.build.gui
+    main_menu.build.gui.start_main_menu()
     
     
 #############################################################################
 
 # Run menu
 
-def on_Back_from_run_button_click():
-    start_main_menu()
+def on_Back_from_run_button_click(window):
+    window.destroy()
+    import main_menu.build.gui 
+    main_menu.build.gui.start_main_menu()

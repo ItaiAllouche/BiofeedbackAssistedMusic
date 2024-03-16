@@ -67,7 +67,7 @@ SF_TEST_INTERVAL = float(getenv('SF_TEST_INTERVAL', 1.5))
 """
 Time in minutes per step freq test
 """
-LOG_CSV =  getenv('LOG_CSV', '/home/adam/shit/BiofeedbackAssistedMusic/logs/run.csv')
+LOG_CSV =  getenv('LOG_CSV', '/home/dogomen11/BiofeedbackAssistedMusic/logs/run.csv')
 """
 Path to csv log directory
 """

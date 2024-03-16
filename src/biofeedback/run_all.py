@@ -3,6 +3,8 @@ import sys
 from biofeedback.controller import run as controller_run
 from biofeedback.acc_pipe import run as acc_pipe_run
 from biofeedback.hr_pipe import run as hr_pipe_run
+sys.path.append("/home/dogomen11/BiofeedbackAssistedMusic/UI")
+from main_menu.build.gui import start_app
 
 
     
@@ -21,6 +23,8 @@ def run():
     hr_proc.join()
     
 try:
-    run()
+    print("Initiated run_all.py")
+    start_app()
+    # run()
 except KeyboardInterrupt:
     sys.exit()
