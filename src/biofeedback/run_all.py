@@ -20,6 +20,6 @@ def run():
     
 try:
     print("Initiated run_all.py")
-    run()
+    # run()
 except KeyboardInterrupt:
     sys.exit()

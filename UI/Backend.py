@@ -1,8 +1,12 @@
 
-from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-import sys
 import os
+import sys
+from pathlib import Path
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 OUTPUT_PATH = Path(__file__).parent
 
 
@@ -12,7 +16,7 @@ OUTPUT_PATH = Path(__file__).parent
 
 def on_Start_run_button_click(window):
     window.destroy()
-    print("Start run")
+    print("on_Start_run_button_click")
     import run_menu.build.gui
     run_menu.build.gui.start_run_menu()
     
@@ -68,3 +72,5 @@ def on_Back_from_run_button_click(window):
     window.destroy()
     import main_menu.build.gui 
     main_menu.build.gui.start_main_menu()
+    
+        
