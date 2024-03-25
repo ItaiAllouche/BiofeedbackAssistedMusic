@@ -54,13 +54,18 @@ class Controller:
                 self.hr_socket.send_pyobj(obj=['test'])
                 self.sf_socket.send_pyobj(obj=['test'])
                 hr_msg: float = self.hr_socket.recv_pyobj()
+                # hr_msg: np.ndarray = self.hr_socket.recv_pyobj() # bvp estimation
                 sf_msg: np.ndarray = self.sf_socket.recv_pyobj()
                 hr_sum += hr_msg
                 hr_count += 1
+                # hr_sum += np.sum(hr_msg) # bvp estimation
+                # print(hr_msg) # bvp estimation
+                # hr_count += len(hr_msg) # bvp estimation
                 sf_sum += np.sum(sf_msg)
                 print(sf_msg)
                 sf_count += len(sf_msg)
                 csvlogger.info(list(LogRow(sf=sf_msg.mean(), hr=hr_msg, tempo=current_tempo)))
+                # csvlogger.info(list(LogRow(sf=sf_msg.mean(), hr=hr_msg.mean(), tempo=current_tempo))) # bvp estimation
             
         return TestPoint(hr_sum/hr_count, sf_sum/sf_count)
 

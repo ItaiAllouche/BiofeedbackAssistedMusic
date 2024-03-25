@@ -14,6 +14,7 @@ def run():
     # Subscriber socket setup
     sub_socket = context.socket(zmq.SUB)
     sub_socket.setsockopt(zmq.SUBSCRIBE, b'ibi')
+    # sub_socket.setsockopt(zmq.SUBSCRIBE, b'bvp') // bvp estimation
     sub_socket.connect(f"tcp://{WATCH_SERVER_IP}:{WATCH_SERVER_PORT}")
 
     # Response socket setup
@@ -35,7 +36,26 @@ def run():
             current_ibi = data['ibi']
         hr = 60/current_ibi
         rep_socket.send_pyobj(hr)
+
+    # bvp estimation 
+    # class BVP(NamedTuple):
+    #     bvp: int
+
+    # bvp_window = []
+
+    # while True:
+    #     _ = rep_socket.recv_pyobj()
     
+    # for _ in range(BVP_SAMPLING_RATE*BVP_WINDOW_TIME):
+    #     # !!!Remember the tcp buffer from the phone!!!
+    #     data: dict = json.loads(sub_socket.recv().decode().split(' ')[1])
+    #     data = {k:int(v) for k,v in data.items()}
+    #     bvp_data = BVP(**data)
+    #     bvp_window.append(bvp_data)
+    # bvp_vector = np.array(bvp_window)
+    # result: float = get_hr_from_bvp(bvp_vector)
+    # rep_socket.send_pyobj(result)
+    # bvp_window = []
 
 if __name__ == '__main__':
     try:
