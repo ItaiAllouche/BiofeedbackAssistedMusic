@@ -9,6 +9,7 @@ HIGH_FREQ = 5 #Hz
 
 hr_history: list[float] = []
 def get_hr_from_bvp(bvp: np.ndarray, reset=False) -> float:
+    global hr_history
     if reset:
         hr_history = []
     filtered_bvp_signal = bandpass_filter(bvp, LOW_FREQ, HIGH_FREQ, sampling_rate=SAMPLING_RATE)
