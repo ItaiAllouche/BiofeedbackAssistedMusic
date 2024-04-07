@@ -48,10 +48,11 @@ class Controller:
         is_first = True
         while(time.time() < end_time):
             if(time.time() > warmup_time): # Calculating over only after half of the interval has passed
+                # Resetting hr_history on first iteration
+                self.hr_socket.send_pyobj(obj=is_first)
                 if(is_first):
                     print(f'Finished warmup')
                     is_first = False
-                self.hr_socket.send_pyobj(obj=['test'])
                 self.sf_socket.send_pyobj(obj=['test'])
                 hr_msg: float = self.hr_socket.recv_pyobj() # bvp estimation
                 sf_msg: np.ndarray = self.sf_socket.recv_pyobj()

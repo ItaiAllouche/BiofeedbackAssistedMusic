@@ -28,7 +28,7 @@ def run():
     bvp_window = []
     all_bvp = np.array([])
     while True:
-        _ = rep_socket.recv_pyobj()
+        reset = rep_socket.recv_pyobj()
         for _ in range(BVP_SAMPLING_RATE*BVP_WINDOW_TIME):
             # !!!Remember the tcp buffer from the phone!!!
             data: dict = json.loads(sub_socket.recv().decode().split(' ')[1])
@@ -36,11 +36,11 @@ def run():
             bvp_data = BVP(**data)
             bvp_window.append(bvp_data)
         bvp_vector = np.array(bvp_window)
-        result: float = get_hr_from_bvp(bvp_vector.squeeze())
+        result: float = get_hr_from_bvp(bvp_vector.squeeze(), reset=reset)
         rep_socket.send_pyobj(result)
         all_bvp = np.append(all_bvp, bvp_window)
-        with open('/home/adam/Desktop/BiofeedbackAssistedMusic/logs/bvp.pkl', 'wb') as f: 
-            pickle.dump(all_bvp, f) 
+        # with open('logs/bvp.pkl', 'wb') as f: 
+        #     pickle.dump(all_bvp, f) 
         # pd.DataFrame({'bvp':all_bvp}).to_csv('/home/adam/Desktop/BiofeedbackAssistedMusic/logs/bvp.csv')
         bvp_window = []
 

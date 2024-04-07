@@ -1,5 +1,4 @@
-# %%
-from scipy.signal import find_peaks, butter, filtfilt
+from scipy.signal import find_peaks, butter, filtfilt, correlate, find_peaks
 from scipy import interpolate
 import numpy as np
 import numpy.typing as npt
@@ -18,7 +17,6 @@ F_max = 2.3
 alpha = 31.7
 beta = 1.4
 
-# %%
 def viz(Tx, Wx):
     plt.imshow(np.abs(Wx), aspect='auto', cmap='turbo')
     plt.colorbar()
@@ -28,7 +26,7 @@ def viz(Tx, Wx):
     plt.colorbar()
     plt.title('Tx')
     plt.show()
-# %%
+    
 def peak2peak(magnitude_vec: np.ndarray) -> float:
     peaks_idx, _ = find_peaks(magnitude_vec)
     if(peaks_idx.size > 1):
@@ -36,7 +34,6 @@ def peak2peak(magnitude_vec: np.ndarray) -> float:
         sorted_idx = np.argsort(peaks_value)
         return peaks_value[sorted_idx[-1]] - peaks_value[sorted_idx[-2]]
     return 0
-# %%
 #TODO: add window to smooth the signal on the edges
 def compute_cwt(signal: np.ndarray, wavelet: tuple, fs: int) -> tuple:
 
@@ -73,7 +70,6 @@ def compute_cwt(signal: np.ndarray, wavelet: tuple, fs: int) -> tuple:
     coefs_interp = coefs_interp[:, 5*fs:-5*fs]
     return magnitude_cwt, freqs_interp, coefs_interp
 
-# %%
 def identify_peaks_in_cwt(freqs_interp: np.ndarray, coefs_interp: np.ndarray,
                           fs: int, step_freq: tuple,
                           alpha: float, beta: float):
@@ -141,7 +137,6 @@ def identify_peaks_in_cwt(freqs_interp: np.ndarray, coefs_interp: np.ndarray,
 
     return dp
 
-# %%
 def find_continuous_dominant_peaks(valid_peaks: np.ndarray, min_t: int,
                                    delta: int) -> npt.NDArray[np.float64]:
     """Identifies continuous and sustained peaks within matrix.
@@ -231,7 +226,6 @@ def find_continuous_dominant_peaks(valid_peaks: np.ndarray, min_t: int,
     return cont_peaks[:, :-1]
 
 #TODO: copmute CWT toat least min_T concecutive valid windows 
-# %%
 def find_walking(magnitude: np.ndarray, valid: np.ndarray, fs: int, 
                  step_freq: tuple, alpha: float,beta: float,
                  min_t: int, delta: int, plot_CWT: bool) -> npt.NDArray[np.float64]:
@@ -307,7 +301,6 @@ def find_walking(magnitude: np.ndarray, valid: np.ndarray, fs: int,
             cadence[i] = freqs_interp[ind_freqs[0]]
 
     return cadence
-# %%
 
 def bandpass_filter(signal_data: np.ndarray, low_freq: float, high_freq: float, sampling_rate:int) -> np.ndarray: 
     """
@@ -329,3 +322,5 @@ def bandpass_filter(signal_data: np.ndarray, low_freq: float, high_freq: float, 
     b, a = butter(order, [low, high], btype='band')
     filtered_signal = filtfilt(b, a, signal_data)
     return filtered_signal
+
+
