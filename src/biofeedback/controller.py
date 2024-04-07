@@ -53,19 +53,13 @@ class Controller:
                     is_first = False
                 self.hr_socket.send_pyobj(obj=['test'])
                 self.sf_socket.send_pyobj(obj=['test'])
-                hr_msg: float = self.hr_socket.recv_pyobj()
-                # hr_msg: np.ndarray = self.hr_socket.recv_pyobj() # bvp estimation
+                hr_msg: float = self.hr_socket.recv_pyobj() # bvp estimation
                 sf_msg: np.ndarray = self.sf_socket.recv_pyobj()
-                hr_sum += hr_msg
-                hr_count += 1
-                # hr_sum += np.sum(hr_msg) # bvp estimation
-                # print(hr_msg) # bvp estimation
-                # hr_count += len(hr_msg) # bvp estimation
+                hr_sum += hr_msg # bvp estimation
+                hr_count += 1 # bvp estimation
                 sf_sum += np.sum(sf_msg)
-                print(sf_msg)
                 sf_count += len(sf_msg)
-                csvlogger.info(list(LogRow(sf=sf_msg.mean(), hr=hr_msg, tempo=current_tempo)))
-                # csvlogger.info(list(LogRow(sf=sf_msg.mean(), hr=hr_msg.mean(), tempo=current_tempo))) # bvp estimation
+                csvlogger.info(list(LogRow(sf=sf_msg.mean(), hr=hr_msg, tempo=current_tempo))) # bvp estimation
             
         return TestPoint(hr_sum/hr_count, sf_sum/sf_count)
 
@@ -110,11 +104,10 @@ class Controller:
 
 
 def run():
-    wanted_sf=[65,75,85]
-    songs = ['ain\'t no sunshine', 'don\'t stop me now', 'axef F']
-    # wanted_sf=[65,70]
+    wanted_sf=[75,85]
+    songs = [str(i) for i in wanted_sf]
     controller = Controller(SERVER_IP, {w_sf:song for w_sf, song in zip(wanted_sf, songs)})
-    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=3)
+    result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=1)
     # result = controller.clc_min_hr_pt(wanted_sf=wanted_sf, n_epoch=1)
     print(result)
     

@@ -23,7 +23,10 @@ def get_hr_from_bvp(bvp: np.ndarray) -> float:
     r = correlate(filtered_bvp_signal, filtered_bvp_signal)
     r = r[len(r)//2:]
     peaks,_ = find_peaks(r, prominence=r[0]/4)
-    plt.plot(r)
-    plt.scatter(peaks, r[peaks], color='r')
-    plt.show()
+    # !!!Show graphs!!!
+    # plt.plot(r)
+    # plt.scatter(peaks, r[peaks], color='r')
+    # plt.show()
+    if len(peaks) < 2:
+        return 1
     return 60/((peaks[1]-peaks[0])/64)

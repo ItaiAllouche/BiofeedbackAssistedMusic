@@ -18,12 +18,6 @@ Sensor window time
 * Must be devisible by `10` (???)
 """
 
-WARM_UP_TIME = int(getenv('WARM_UP_TIME', 120))
-""" 
-Warm up stage length
-* Units in seconds
-"""
-
 STABLE_COUNTDOWN = int(getenv('STABLE_COUNTDOWN', 3))
 """
 Number of interval with time `INTERVAL` to allow for HR stabilization
@@ -54,7 +48,7 @@ BVP_WINDOW_TIME = int(getenv('BVP_WINDOW_TIME', 10))
 BVP measuring window time
 """
 
-WATCH_SERVER_IP = getenv('WATCH_SERVER_IP', '192.168.1.179')
+WATCH_SERVER_IP = getenv('WATCH_SERVER_IP', '192.168.3.200')
 """
 IP of watch server, i.e phone
 """

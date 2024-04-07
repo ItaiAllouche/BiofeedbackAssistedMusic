@@ -9,3 +9,4 @@ src/biofeedback/__pycache__
 dist/
 src/games.ipynb
 build/
+logs/*
